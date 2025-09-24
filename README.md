@@ -177,13 +177,25 @@ The user dashboard provides a centralized place for authenticated users to manag
 - **Error Handling**: Robust error handling implemented using `try/catch` blocks in Server Actions and `error.tsx` for UI error boundaries.
 - **Environment Variables**: All sensitive keys and configurations are managed through environment variables.
 
-## Security Audit Challenge
+## Security Enhancements
 
 This project was developed with a focus on security, particularly in the context of a security audit challenge. The primary objectives were to:
 
 1.  **Implement Secure Authentication**: Utilize Supabase Auth to handle user registration, login, and session management securely.
 2.  **Protect Against Unauthorized Access**: Implement Row Level Security (RLS) policies in Supabase to ensure users can only access and modify their own data (e.g., a user can only edit/delete polls they created).
-3.  **Prevent Common Web Vulnerabilities**: Ensure Server Actions are used correctly to prevent issues like SQL injection (Supabase client handles this), XSS (by properly sanitizing inputs, though not explicitly shown in this README), and CSRF (Next.js and Server Actions provide built-in protections).
+3.  **Prevent Common Web Vulnerabilities**: Ensure Server Actions are used correctly to prevent issues like SQL injection (Supabase client handles this), XSS, and CSRF (Next.js and Server Actions provide built-in protections).
 4.  **Secure Data Mutations**: All data modification operations (creating, updating, deleting polls, submitting votes) are performed via Next.js Server Actions, which run on the server, preventing client-side tampering with sensitive logic.
+
+### Fixed Security Issues
+
+#### 1. Improper Input Validation / Cross-Site Scripting (XSS)
+
+**Issue**: User-generated content, specifically poll questions and options, was not being sanitized before being stored in the database and displayed, making the application vulnerable to XSS attacks. An attacker could inject malicious scripts that would execute in other users' browsers.
+
+**Solution**:
+To mitigate the XSS vulnerability, the following steps were taken:
+-   **`dompurify` and `jsdom` Integration**: The `dompurify` library was integrated along with `jsdom` to provide robust server-side HTML sanitization.
+-   **`sanitizeInput` Helper Function**: A helper function `sanitizeInput` was created in `app/lib/actions/poll-actions.ts` to encapsulate the sanitization logic. This function uses `DOMPurify.sanitize()` to clean potentially malicious input.
+-   **Application in Server Actions**: The `sanitizeInput` function is now applied to the `question` and `options` fields within the `createPoll` and `updatePoll` Server Actions in `app/lib/actions/poll-actions.ts`. This ensures that all user-provided text content is sanitized before being stored in the database, effectively preventing XSS attacks.
 
 This README provides a comprehensive overview of the ALX Polly application, its technical foundation, and how to get started. For more detailed code-level understanding, refer to the inline comments and docstrings within the source files.
